@@ -39,23 +39,30 @@
     <h1>Generador de Cotizaciones</h1>
 
     <div class="section-title">Datos del Cliente</div>
+    
     <div class="grid-2">
         <div class="form-group">
             <label>Nombre / Razón Social</label>
             <input type="text" id="clienteNombre" placeholder="Ej. Juan Pérez">
         </div>
         <div class="form-group">
-            <label>Tipo Identificación</label>
-            <div style="display: flex; gap: 10px;">
-                <select id="tipoId" style="width: 80px;">
-                    <option value="CIP">CIP</option>
-                    <option value="RUC">RUC</option>
-                    <option value="ID">ID</option>
-                </select>
-                <input type="text" id="clienteId" placeholder="Ej. 8-123-456">
-            </div>
+            <label>Teléfono / Celular</label>
+            <input type="text" id="clienteTelefono" placeholder="Ej. 6123-4567">
         </div>
     </div>
+
+    <div class="form-group">
+        <label>Tipo Identificación</label>
+        <div style="display: flex; gap: 10px;">
+            <select id="tipoId" style="width: 80px;">
+                <option value="CIP">CIP</option>
+                <option value="RUC">RUC</option>
+                <option value="ID">ID</option>
+            </select>
+            <input type="text" id="clienteId" placeholder="Ej. 8-123-456">
+        </div>
+    </div>
+
     <div class="form-group">
         <label>Dirección</label>
         <input type="text" id="clienteDireccion" placeholder="Dirección completa">
@@ -113,7 +120,6 @@
 
 <script>
     const items = [];
-    // IMPORTANTE: En Vercel, el logo debe estar en la misma carpeta pública
     const LOGO_URL = './logo2.png'; 
 
     document.addEventListener('DOMContentLoaded', () => { agregarItem(); });
@@ -226,23 +232,32 @@
         doc.text("COTIZACIÓN DE SERVICIO", 12, y);
         y += 10;
 
-        // Cliente y Datos
-        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(12, y, 90, 30, 2, 2, 'F');
+        // Cliente y Datos (Aumentada la altura para el teléfono)
+        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(12, y, 90, 40, 2, 2, 'F'); // Altura 40
         doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
         doc.text("FACTURAR A:", 15, y + 5);
         
         const nombre = document.getElementById('clienteNombre').value || 'Cliente General';
+        const telefono = document.getElementById('clienteTelefono').value || ''; // Nuevo campo
         const tipoId = document.getElementById('tipoId').value;
         const numId = document.getElementById('clienteId').value || 'N/A';
         const direcc = document.getElementById('clienteDireccion').value || '';
 
-        doc.setFontSize(9); doc.setTextColor(51, 51, 51); doc.text(nombre, 15, y + 10);
+        doc.setFontSize(9); doc.setTextColor(51, 51, 51); 
+        doc.text(nombre, 15, y + 10);
+        
         doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(85, 85, 85);
-        doc.text(`${tipoId}: ${numId}`, 15, y + 15);
-        doc.text(direcc, 15, y + 20, { maxWidth: 80 });
+        
+        // Renderizar Teléfono
+        if (telefono) {
+            doc.text(`Tel: ${telefono}`, 15, y + 15);
+        }
+        
+        doc.text(`${tipoId}: ${numId}`, 15, y + (telefono ? 20 : 15));
+        doc.text(direcc, 15, y + (telefono ? 25 : 20), { maxWidth: 80 });
 
-        // Datos Derecha
-        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(110, y, 85, 30, 2, 2, 'F');
+        // Datos Derecha (Info Cotización)
+        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(110, y, 85, 40, 2, 2, 'F'); // Altura 40 para igualar
         const labelX = 115; const valX = 190;
         
         doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
@@ -269,7 +284,7 @@
         ]);
 
         doc.autoTable({
-            startY: y + 35,
+            startY: y + 45, // Bajamos un poco la tabla porque la caja de arriba creció
             head: [['DESCRIPCIÓN', 'CANT.', 'PRECIO U.', 'TOTAL']],
             body: tableBody,
             theme: 'plain',
@@ -315,7 +330,7 @@
         }
 
         // SECCIÓN BANCARIA
-        const bankY = footerY - 25; // Subimos un poco para dejar espacio
+        const bankY = footerY - 25; 
         doc.setFontSize(7);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...COLOR_PRINCIPAL);
@@ -324,7 +339,7 @@
         doc.setFont("helvetica", "normal");
         doc.setTextColor(51, 51, 51);
         doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: JOSE ANTONIO PEREZ', 12, bankY + 4);
-        doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318 / BANCO BAC N 116961301', 12, bankY + 8);
+        doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318 / BANCO BAC N 116961301 / YAPPY 6178-9785', 12, bankY + 8);
 
         // NOTAS
         doc.setFont("helvetica", "bold"); doc.setTextColor(51);
