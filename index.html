@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Cotizaciones JAPE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root { --color-principal: #E50000; --color-secundario: #1a1a1a; --color-gris-claro: #f5f5f5; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: var(--color-secundario); text-align: center; margin-bottom: 30px; border-bottom: 4px solid var(--color-principal); padding-bottom: 10px; }
+        .section-title { font-size: 1.1rem; font-weight: bold; color: var(--color-principal); margin-top: 20px; margin-bottom: 10px; text-transform: uppercase; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        .items-container { margin-top: 20px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        .item-row { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr auto; gap: 10px; padding: 10px; background: #fff; border-bottom: 1px solid #eee; align-items: center; }
+        .item-row:nth-child(even) { background-color: #fafafa; }
+        .item-header { background-color: var(--color-secundario); color: white; font-weight: bold; font-size: 0.8rem; }
+        .btn-delete { background: #ff4444; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-add { background-color: var(--color-secundario); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .totals-section { margin-top: 30px; display: flex; flex-direction: column; align-items: flex-end; }
+        .total-row { display: flex; justify-content: space-between; width: 300px; margin-bottom: 10px; font-size: 1.1rem; }
+        .total-final { background-color: var(--color-principal); color: white; padding: 15px; border-radius: 6px; font-weight: bold; font-size: 1.3rem; }
+        .checkbox-container { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 10px; cursor: pointer; }
+        .checkbox-container input { width: auto; margin-right: 10px; transform: scale(1.5); }
+        .btn-generate { display: block; width: 100%; padding: 15px; background-color: var(--color-principal); color: white; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 30px; transition: background 0.3s; }
+        .btn-generate:hover { background-color: #b30000; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .item-row { grid-template-columns: 1fr; border-bottom: 4px solid #eee; padding-bottom: 20px; } .item-header { display: none; } .total-row { width: 100%; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Generador de Cotizaciones</h1>
+
+    <div class="section-title">Datos del Cliente</div>
+    <div class="grid-2">
+        <div class="form-group">
+            <label>Nombre / Razón Social</label>
+            <input type="text" id="clienteNombre" placeholder="Ej. Juan Pérez">
+        </div>
+        <div class="form-group">
+            <label>Tipo Identificación</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="tipoId" style="width: 80px;">
+                    <option value="CIP">CIP</option>
+                    <option value="RUC">RUC</option>
+                    <option value="ID">ID</option>
+                </select>
+                <input type="text" id="clienteId" placeholder="Ej. 8-123-456">
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Dirección</label>
+        <input type="text" id="clienteDireccion" placeholder="Dirección completa">
+    </div>
+
+    <div class="section-title">Detalles Cotización</div>
+    <div class="grid-2">
+        <div class="form-group">
+            <label>Nº Cotización</label>
+            <input type="text" id="numCotizacion" value="COT-001">
+        </div>
+        <div class="form-group">
+            <label>Validez</label>
+            <input type="text" id="validez" value="15 Días Hábiles">
+        </div>
+    </div>
+
+    <div class="section-title">Servicios / Productos</div>
+    <div class="items-container" id="itemsList">
+        <div class="item-row item-header">
+            <div>Descripción</div>
+            <div>Cant.</div>
+            <div>Precio Unit.</div>
+            <div>Total</div>
+            <div></div>
+        </div>
+    </div>
+    <button class="btn-add" onclick="agregarItem()">+ Agregar Item</button>
+
+    <div class="totals-section">
+        <label class="checkbox-container">
+            <input type="checkbox" id="checkITBMS" onchange="calcularTotales()">
+            Aplicar ITBMS (7%)
+        </label>
+
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span id="txtSubtotal">$0.00</span>
+        </div>
+        <div class="total-row" id="rowITBMS" style="display: none; color: #666;">
+            <span>ITBMS (7%):</span>
+            <span id="txtITBMS">$0.00</span>
+        </div>
+        <div class="total-row total-final">
+            <span>TOTAL:</span>
+            <span id="txtTotal">$0.00</span>
+        </div>
+    </div>
+
+    <div class="section-title">Notas</div>
+    <textarea id="notas" rows="3">Cotización válida por 15 días hábiles. Precios sujetos a cambios sin previo aviso.</textarea>
+
+    <button class="btn-generate" onclick="generarPDF()">Descargar PDF</button>
+</div>
+
+<script>
+    const items = [];
+    // IMPORTANTE: En Vercel, el logo debe estar en la misma carpeta pública
+    const LOGO_URL = './logo2.png'; 
+
+    document.addEventListener('DOMContentLoaded', () => { agregarItem(); });
+
+    function agregarItem() {
+        const id = Date.now();
+        items.push({ id, descripcion: '', cantidad: 1, precio: 0 });
+        renderItems();
+    }
+
+    function eliminarItem(id) {
+        if (items.length > 1) {
+            const index = items.findIndex(i => i.id === id);
+            items.splice(index, 1);
+            renderItems();
+            calcularTotales();
+        }
+    }
+
+    function updateItem(id, field, value) {
+        const item = items.find(i => i.id === id);
+        if (field === 'cantidad' || field === 'precio') {
+            item[field] = parseFloat(value) || 0;
+        } else {
+            item[field] = value;
+        }
+        renderItems(false);
+        calcularTotales();
+    }
+
+    function renderItems(fullRender = true) {
+        if (!fullRender) {
+            items.forEach(item => {
+                const totalSpan = document.getElementById(`total-${item.id}`);
+                if (totalSpan) totalSpan.innerText = `$${(item.cantidad * item.precio).toFixed(2)}`;
+            });
+            return;
+        }
+        const container = document.getElementById('itemsList');
+        const header = container.querySelector('.item-header');
+        container.innerHTML = '';
+        container.appendChild(header);
+
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Descripción" value="${item.descripcion}" oninput="updateItem(${item.id}, 'descripcion', this.value)">
+                <input type="number" placeholder="Cant." value="${item.cantidad}" oninput="updateItem(${item.id}, 'cantidad', this.value)">
+                <input type="number" placeholder="Precio" value="${item.precio}" oninput="updateItem(${item.id}, 'precio', this.value)">
+                <div style="font-weight:bold; text-align:right" id="total-${item.id}">$${(item.cantidad * item.precio).toFixed(2)}</div>
+                <button class="btn-delete" onclick="eliminarItem(${item.id})" title="Eliminar">X</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function calcularTotales() {
+        const subtotal = items.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
+        const aplicaITBMS = document.getElementById('checkITBMS').checked;
+        const itbms = aplicaITBMS ? subtotal * 0.07 : 0;
+        const total = subtotal + itbms;
+        document.getElementById('txtSubtotal').innerText = `$${subtotal.toFixed(2)}`;
+        document.getElementById('txtITBMS').innerText = `$${itbms.toFixed(2)}`;
+        document.getElementById('txtTotal').innerText = `$${total.toFixed(2)}`;
+        document.getElementById('rowITBMS').style.display = aplicaITBMS ? 'flex' : 'none';
+    }
+
+    async function generarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Configuración Colores
+        const COLOR_PRINCIPAL = [229, 0, 0]; 
+        const COLOR_SECUNDARIO = [26, 26, 26]; 
+        const COLOR_GRIS_CLARO = [245, 245, 245]; 
+
+        // --- HEADER ---
+        const headerHeight = 40; 
+        doc.setFillColor(...COLOR_SECUNDARIO);
+        doc.rect(0, 0, 210, headerHeight, 'F');
+
+        // Carga de Logo Local
+        try {
+            const img = new Image();
+            img.src = LOGO_URL;
+            await new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = resolve; 
+            });
+            if (img.width > 0) doc.addImage(img, 'PNG', 12, 8, 26, 26); 
+            else {
+                 doc.setFontSize(22); doc.setTextColor(255, 255, 255); doc.text("JAPE", 12, 20);
+            }
+        } catch (e) { console.log("Error logo"); }
+
+        // Texto Header
+        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
+        doc.text("MULTISERVICES JAPE", 195, 12, { align: "right" });
+        doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(204, 204, 204);
+        doc.text("Servicios Generales, Mantenimiento y Remodelación", 195, 17, { align: "right" });
+        doc.text("Panamá, Panamá", 195, 22, { align: "right" });
+
+        // Línea divisoria
+        doc.setFillColor(...COLOR_PRINCIPAL); doc.rect(0, headerHeight, 210, 2, 'F');
+
+        // --- BODY ---
+        let y = headerHeight + 15;
+        doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_PRINCIPAL);
+        doc.text("COTIZACIÓN DE SERVICIO", 12, y);
+        y += 10;
+
+        // Cliente y Datos
+        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(12, y, 90, 30, 2, 2, 'F');
+        doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
+        doc.text("FACTURAR A:", 15, y + 5);
+        
+        const nombre = document.getElementById('clienteNombre').value || 'Cliente General';
+        const tipoId = document.getElementById('tipoId').value;
+        const numId = document.getElementById('clienteId').value || 'N/A';
+        const direcc = document.getElementById('clienteDireccion').value || '';
+
+        doc.setFontSize(9); doc.setTextColor(51, 51, 51); doc.text(nombre, 15, y + 10);
+        doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(85, 85, 85);
+        doc.text(`${tipoId}: ${numId}`, 15, y + 15);
+        doc.text(direcc, 15, y + 20, { maxWidth: 80 });
+
+        // Datos Derecha
+        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(110, y, 85, 30, 2, 2, 'F');
+        const labelX = 115; const valX = 190;
+        
+        doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
+        doc.text("Nº COTIZACIÓN:", labelX, y + 5);
+        doc.setTextColor(...COLOR_PRINCIPAL);
+        doc.text(document.getElementById('numCotizacion').value, valX, y + 5, { align: "right" });
+
+        doc.setTextColor(...COLOR_SECUNDARIO);
+        doc.text("FECHA EMISIÓN:", labelX, y + 12);
+        doc.setFont("helvetica", "normal"); doc.setTextColor(51, 51, 51);
+        doc.text(new Date().toLocaleDateString('es-PA'), valX, y + 12, { align: "right" });
+
+        doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
+        doc.text("VALIDEZ:", labelX, y + 19);
+        doc.setFont("helvetica", "normal"); doc.setTextColor(51, 51, 51);
+        doc.text(document.getElementById('validez').value, valX, y + 19, { align: "right" });
+
+        // Tabla
+        const tableBody = items.map(item => [
+            item.descripcion,
+            item.cantidad,
+            `$${item.precio.toFixed(2)}`,
+            `$${(item.cantidad * item.precio).toFixed(2)}`
+        ]);
+
+        doc.autoTable({
+            startY: y + 35,
+            head: [['DESCRIPCIÓN', 'CANT.', 'PRECIO U.', 'TOTAL']],
+            body: tableBody,
+            theme: 'plain',
+            headStyles: { fillColor: COLOR_SECUNDARIO, textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', halign: 'center' },
+            styles: { fontSize: 8, cellPadding: 3 },
+            columnStyles: { 0: {halign: 'left'}, 1: {halign: 'center'}, 2: {halign: 'right'}, 3: {halign: 'right', fontStyle: 'bold'} },
+            alternateRowStyles: { fillColor: [249, 249, 249] },
+            margin: { left: 12, right: 12 }
+        });
+
+        // Totales
+        let finalY = doc.lastAutoTable.finalY + 10;
+        const boxX = 120;
+        const subtotal = items.reduce((s, i) => s + (i.cantidad * i.precio), 0);
+        const aplicaITBMS = document.getElementById('checkITBMS').checked;
+        const itbms = aplicaITBMS ? subtotal * 0.07 : 0;
+        const total = subtotal + itbms;
+
+        doc.setDrawColor(221); doc.line(boxX, finalY, 195, finalY); finalY += 5;
+        doc.setFontSize(9); doc.setTextColor(102); doc.text("Subtotal:", boxX, finalY);
+        doc.setTextColor(51); doc.text(`$${subtotal.toFixed(2)}`, 195, finalY, { align: "right" });
+        finalY += 7;
+
+        if (aplicaITBMS) {
+            doc.setTextColor(102); doc.text("ITBMS (7%):", boxX, finalY);
+            doc.setTextColor(51); doc.text(`$${itbms.toFixed(2)}`, 195, finalY, { align: "right" });
+            finalY += 10;
+        } else { finalY += 3; }
+
+        doc.setFillColor(...COLOR_PRINCIPAL); doc.rect(boxX - 5, finalY - 5, 85, 12, 'F');
+        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(255);
+        doc.text("TOTAL A PAGAR:", boxX, finalY + 3);
+        doc.text(`$${total.toFixed(2)}`, 195, finalY + 3, { align: "right" });
+
+        // --- FOOTER Y DATOS BANCARIOS ---
+        const pageHeight = doc.internal.pageSize.height;
+        let footerY = pageHeight - 30;
+
+        // Comprobamos si hay espacio para los datos bancarios
+        if (finalY > footerY - 40) {
+            doc.addPage();
+            footerY = 40;
+        }
+
+        // SECCIÓN BANCARIA
+        const bankY = footerY - 25; // Subimos un poco para dejar espacio
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...COLOR_PRINCIPAL);
+        doc.text('INFORMACIÓN DE PAGO:', 12, bankY);
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(51, 51, 51);
+        doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: JOSE ANTONIO PEREZ', 12, bankY + 4);
+        doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318 / BANCO BAC N 116961301', 12, bankY + 8);
+
+        // NOTAS
+        doc.setFont("helvetica", "bold"); doc.setTextColor(51);
+        doc.text("NOTAS:", 12, footerY);
+        doc.setFont("helvetica", "normal"); doc.setTextColor(85);
+        const notas = document.getElementById('notas').value;
+        doc.text(notas, 12, footerY + 5, { maxWidth: 180 });
+
+        doc.setTextColor(170);
+        doc.text("Generado por Multiservices JAPE", 105, pageHeight - 10, { align: "center" });
+
+        const nombreArchivo = `Cotizacion-${document.getElementById('numCotizacion').value}.pdf`;
+        doc.save(nombreArchivo);
+    }
+</script>
+
+</body>
+</html>
