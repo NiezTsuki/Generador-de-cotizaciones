@@ -3,127 +3,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Cotizaciones JAPE</title>
+    <title>Cotizador JAPE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        :root { --color-principal: #E50000; --color-secundario: #1a1a1a; --color-gris-claro: #f5f5f5; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h1 { color: var(--color-secundario); text-align: center; margin-bottom: 30px; border-bottom: 4px solid var(--color-principal); padding-bottom: 10px; }
-        .section-title { font-size: 1.1rem; font-weight: bold; color: var(--color-principal); margin-top: 20px; margin-bottom: 10px; text-transform: uppercase; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
-        .items-container { margin-top: 20px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        .item-row { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr auto; gap: 10px; padding: 10px; background: #fff; border-bottom: 1px solid #eee; align-items: center; }
-        .item-row:nth-child(even) { background-color: #fafafa; }
-        .item-header { background-color: var(--color-secundario); color: white; font-weight: bold; font-size: 0.8rem; }
-        .btn-delete { background: #ff4444; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-add { background-color: var(--color-secundario); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        .totals-section { margin-top: 30px; display: flex; flex-direction: column; align-items: flex-end; }
-        .total-row { display: flex; justify-content: space-between; width: 300px; margin-bottom: 10px; font-size: 1.1rem; }
-        .total-final { background-color: var(--color-principal); color: white; padding: 15px; border-radius: 6px; font-weight: bold; font-size: 1.3rem; }
-        .checkbox-container { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 10px; cursor: pointer; }
-        .checkbox-container input { width: auto; margin-right: 10px; transform: scale(1.5); }
-        .btn-generate { display: block; width: 100%; padding: 15px; background-color: var(--color-principal); color: white; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 30px; transition: background 0.3s; }
-        .btn-generate:hover { background-color: #b30000; }
-        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .item-row { grid-template-columns: 1fr; border-bottom: 4px solid #eee; padding-bottom: 20px; } .item-header { display: none; } .total-row { width: 100%; } }
+        :root { 
+            --primary: #D32F2F; /* Rojo JAPE */
+            --primary-dark: #b71c1c;
+            --dark: #1a1a1a; 
+            --gray: #666666;
+            --border: #cccccc;
+            --bg: #f4f6f8;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 30px 20px; 
+            color: var(--dark); 
+            font-size: 18px; /* Letra base GRANDE para buena visibilidad */
+            line-height: 1.5;
+        }
+
+        .container { 
+            max-width: 950px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra suave */
+            border: 1px solid #e0e0e0;
+        }
+
+        /* TÍTULO */
+        h1 { 
+            color: var(--primary); 
+            text-align: center; 
+            margin-bottom: 35px; 
+            font-size: 2.4rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 15px;
+        }
+
+        /* SECCIONES */
+        .section-title { 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            color: var(--dark); 
+            margin-top: 40px; 
+            margin-bottom: 15px; 
+            text-transform: uppercase; 
+            display: flex;
+            align-items: center;
+        }
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 24px;
+            background-color: var(--primary);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        /* PANEL DE CONTROL (REDISEÑADO - BLANCO Y LIMPIO) */
+        .control-panel { 
+            background: #ffffff; 
+            padding: 25px; 
+            border-radius: 8px; 
+            margin-bottom: 40px; 
+            border: 1px solid #d0d0d0; /* Borde gris sutil */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 1.3rem;
+            color: #444;
+            font-weight: 700;
+        }
+
+        /* INPUTS (Grandes y claros) */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .form-group { margin-bottom: 25px; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 700; 
+            font-size: 1rem; 
+            color: #333; 
+        }
+
+        input, select, textarea { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 1.1rem; 
+            color: #000;
+            box-sizing: border-box; 
+            transition: border 0.2s;
+            background-color: #fff;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--primary); 
+            outline: none; 
+            background-color: #fffbfc;
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1); 
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* BOTONES */
+        button { cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.2s; }
+        
+        .btn { 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            border: none; 
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-save { background-color: #333; color: white; }
+        .btn-save:hover { background-color: #000; }
+
+        .btn-new { background-color: #fff; border: 2px solid #333; color: #333; }
+        .btn-new:hover { background-color: #f0f0f0; }
+
+        .btn-generate { 
+            background-color: var(--primary); 
+            color: white; 
+            width: 100%; 
+            padding: 18px; 
+            font-size: 1.3rem; 
+            margin-top: 40px;
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+        }
+        .btn-generate:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
+
+        .btn-outline { 
+            background-color: transparent; 
+            border: 2px dashed #999; 
+            color: #555; 
+            padding: 15px;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 1.1rem;
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); background-color: #fffdfd; }
+
+        /* TABLA DE ITEMS */
+        .items-header { 
+            display: grid; 
+            grid-template-columns: 4fr 1fr 1.5fr 1.5fr auto; 
+            gap: 15px; 
+            padding: 15px; 
+            background-color: #212121; 
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .items-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .item-row { 
+            display: grid; 
+            grid-template-columns: 4fr 1fr 1.5fr 1.5fr auto; 
+            gap: 15px; 
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-left: 5px solid #ccc; /* Indicador visual izquierdo */
+            border-radius: 4px;
+            background: white;
+            align-items: start;
+        }
+        .item-row:focus-within { border-left-color: var(--primary); }
+
+        .btn-remove { 
+            background: #ffebee; 
+            color: #d32f2f; 
+            border: 1px solid #ef5350; 
+            width: 45px; height: 45px; 
+            border-radius: 6px;
+            font-size: 1.5rem; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-remove:hover { background: #d32f2f; color: white; }
+
+        /* TOTALES */
+        .totals-container { 
+            margin-top: 40px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; 
+            padding: 20px;
+            background: #fafafa;
+            border-top: 2px solid #eee;
+        }
+
+        .total-line { 
+            display: flex; justify-content: space-between; width: 100%; max-width: 400px;
+            margin-bottom: 12px; font-size: 1.1rem; color: #555; font-weight: 600;
+        }
+
+        .total-final { 
+            font-size: 1.8rem; font-weight: 800; color: var(--primary); 
+            margin-top: 10px; padding-top: 15px; border-top: 2px solid #ddd;
+        }
+
+        .checkbox-wrapper { 
+            display: flex; align-items: center; justify-content: flex-end; 
+            margin-bottom: 20px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
+        }
+        .checkbox-wrapper input { width: 25px; height: 25px; margin-right: 12px; }
+
+        /* Estilo Select Historial */
+        #historialSelect {
+            font-family: monospace; 
+            font-size: 1rem;
+            border-color: #bbb;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 850px) { 
+            .grid-2 { grid-template-columns: 1fr; } 
+            .items-header { display: none; }
+            .item-row { grid-template-columns: 1fr; border-left: none; border-bottom: 5px solid #ccc; }
+            .panel-header { flex-direction: column; align-items: stretch; }
+            .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Generador de Cotizaciones</h1>
+    <h1>COTIZADOR JAPE</h1>
 
-    <div class="section-title">Datos del Cliente</div>
-    
+    <div class="control-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">📂 Gestión de Archivos</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="guardarCotizacion()" class="btn btn-save">💾 Guardar Progreso</button>
+                <button onclick="limpiarFormulario()" class="btn btn-new">✨ Empezar Nueva</button>
+            </div>
+        </div>
+        
+        <div style="background: #f9f9f9; padding: 15px; border: 1px solid #eee; border-radius: 6px;">
+            <label style="margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; color: #666;">Cargar Cotización Anterior:</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="historialSelect" onchange="cargarCotizacionSeleccionada()">
+                    <option value="">-- Seleccionar --</option>
+                </select>
+                <button onclick="borrarCotizacionGuardada()" class="btn-remove" style="width: auto; padding: 0 20px; font-size: 1rem; height: auto;">Borrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">1. Datos del Cliente</div>
     <div class="grid-2">
         <div class="form-group">
-            <label>Nombre / Razón Social</label>
-            <input type="text" id="clienteNombre" placeholder="Ej. Juan Pérez">
+            <label>Nombre Completo / Empresa</label>
+            <input type="text" id="clienteNombre" placeholder="Ej: Juan Pérez">
         </div>
         <div class="form-group">
-            <label>Teléfono / Celular</label>
-            <input type="text" id="clienteTelefono" placeholder="Ej. 6123-4567">
+            <label>Teléfono (Formato Automático)</label>
+            <input type="tel" id="clienteTelefono" placeholder="6000-0000" maxlength="9"> 
         </div>
     </div>
 
     <div class="form-group">
-        <label>Tipo Identificación</label>
-        <div style="display: flex; gap: 10px;">
-            <select id="tipoId" style="width: 80px;">
+        <label>Identificación</label>
+        <div style="display: flex; gap: 15px;">
+            <select id="tipoId" style="width: 120px; flex-shrink: 0;">
                 <option value="CIP">CIP</option>
                 <option value="RUC">RUC</option>
                 <option value="ID">ID</option>
             </select>
-            <input type="text" id="clienteId" placeholder="Ej. 8-123-456">
+            <input type="text" id="clienteId" placeholder="Número de ID">
         </div>
     </div>
 
     <div class="form-group">
-        <label>Dirección</label>
-        <input type="text" id="clienteDireccion" placeholder="Dirección completa">
+        <label>Dirección Física</label>
+        <input type="text" id="clienteDireccion" placeholder="Ubicación...">
     </div>
 
-    <div class="section-title">Detalles Cotización</div>
+    <div class="section-title">2. Detalles del Documento</div>
     <div class="grid-2">
         <div class="form-group">
-            <label>Nº Cotización</label>
-            <input type="text" id="numCotizacion" value="COT-001">
+            <label>Número de Cotización</label>
+            <input type="text" id="numCotizacion" value="COT-001" style="font-weight: 800; color: var(--primary); background-color: #fff;">
         </div>
         <div class="form-group">
-            <label>Validez</label>
+            <label>Tiempo de Validez</label>
             <input type="text" id="validez" value="15 Días Hábiles">
         </div>
     </div>
 
-    <div class="section-title">Servicios / Productos</div>
-    <div class="items-container" id="itemsList">
-        <div class="item-row item-header">
-            <div>Descripción</div>
-            <div>Cant.</div>
-            <div>Precio Unit.</div>
-            <div>Total</div>
-            <div></div>
-        </div>
+    <div class="section-title">3. Descripción de Servicios</div>
+    
+    <div class="items-header">
+        <div>Descripción</div>
+        <div style="text-align: center;">Cant.</div>
+        <div style="text-align: right;">Precio ($)</div>
+        <div style="text-align: right;">Total</div>
+        <div></div>
     </div>
-    <button class="btn-add" onclick="agregarItem()">+ Agregar Item</button>
 
-    <div class="totals-section">
-        <label class="checkbox-container">
+    <div class="items-list" id="itemsList">
+        </div>
+
+    <button class="btn btn-outline" onclick="agregarItem()">
+        + Agregar línea de servicio
+    </button>
+
+    <div class="totals-container">
+        <label class="checkbox-wrapper">
             <input type="checkbox" id="checkITBMS" onchange="calcularTotales()">
-            Aplicar ITBMS (7%)
+            <span>Aplicar Impuesto (ITBMS 7%)</span>
         </label>
 
-        <div class="total-row">
+        <div class="total-line">
             <span>Subtotal:</span>
             <span id="txtSubtotal">$0.00</span>
         </div>
-        <div class="total-row" id="rowITBMS" style="display: none; color: #666;">
+        <div class="total-line" id="rowITBMS" style="display: none;">
             <span>ITBMS (7%):</span>
             <span id="txtITBMS">$0.00</span>
         </div>
-        <div class="total-row total-final">
-            <span>TOTAL:</span>
+        <div class="total-line total-final">
+            <span>TOTAL A PAGAR:</span>
             <span id="txtTotal">$0.00</span>
         </div>
     </div>
 
-    <div class="section-title">Notas</div>
+    <div class="section-title">4. Notas / Observaciones</div>
     <textarea id="notas" rows="3">Cotización válida por 15 días hábiles. Precios sujetos a cambios sin previo aviso.</textarea>
 
-    <button class="btn-generate" onclick="generarPDF()">Descargar PDF</button>
+    <button class="btn btn-generate" onclick="generarPDF()">
+        📄 DESCARGAR PDF
+    </button>
 </div>
 
 <script>
-    const items = [];
+    let items = [];
     const LOGO_URL = './logo2.png'; 
+    const STORAGE_KEY = 'jape_cotizaciones_v5_final';
 
-    document.addEventListener('DOMContentLoaded', () => { agregarItem(); });
+    document.addEventListener('DOMContentLoaded', () => { 
+        agregarItem(); 
+        actualizarSelectHistorial(); 
+        setupMasks(); 
+    });
 
+    // --- MÁSCARAS ---
+    function setupMasks() {
+        const telInput = document.getElementById('clienteTelefono');
+        telInput.addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,4})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2];
+        });
+    }
+
+    // --- GESTIÓN DE HISTORIAL DETALLADO ---
+    function guardarCotizacion() {
+        const numCot = document.getElementById('numCotizacion').value;
+        if(!numCot) { alert("Falta el número de cotización"); return; }
+
+        const now = new Date();
+        const cotizacion = {
+            id: numCot, 
+            fecha: now.toLocaleDateString(),
+            hora: now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            datos: {
+                nombre: document.getElementById('clienteNombre').value,
+                telefono: document.getElementById('clienteTelefono').value,
+                tipoId: document.getElementById('tipoId').value,
+                clienteId: document.getElementById('clienteId').value,
+                direccion: document.getElementById('clienteDireccion').value,
+                numCotizacion: numCot,
+                validez: document.getElementById('validez').value,
+                notas: document.getElementById('notas').value,
+                checkITBMS: document.getElementById('checkITBMS').checked
+            },
+            items: items
+        };
+
+        let historial = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        historial[numCot] = cotizacion;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(historial));
+        actualizarSelectHistorial();
+        
+        const btn = document.querySelector('.btn-save');
+        const original = btn.innerHTML;
+        btn.innerHTML = "✅ Guardado";
+        setTimeout(() => btn.innerHTML = original, 1500);
+    }
+
+    function actualizarSelectHistorial() {
+        const historial = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const select = document.getElementById('historialSelect');
+        const current = select.value;
+        select.innerHTML = '<option value="">-- Seleccionar cotización guardada --</option>';
+
+        Object.values(historial).reverse().forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.id;
+            const nombreCliente = c.datos.nombre ? c.datos.nombre : "Sin Nombre";
+            const fechaHora = c.fecha ? `(${c.fecha} ${c.hora})` : "";
+            option.text = `${c.id} | ${nombreCliente} ${fechaHora}`;
+            select.appendChild(option);
+        });
+        
+        if(historial[current]) select.value = current;
+    }
+
+    function cargarCotizacionSeleccionada() {
+        const id = document.getElementById('historialSelect').value;
+        if (!id) return;
+        const h = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const c = h[id];
+        if (c) {
+            document.getElementById('clienteNombre').value = c.datos.nombre || '';
+            document.getElementById('clienteTelefono').value = c.datos.telefono || '';
+            document.getElementById('tipoId').value = c.datos.tipoId;
+            document.getElementById('clienteId').value = c.datos.clienteId || '';
+            document.getElementById('clienteDireccion').value = c.datos.direccion || '';
+            document.getElementById('numCotizacion').value = c.datos.numCotizacion;
+            document.getElementById('validez').value = c.datos.validez;
+            document.getElementById('notas').value = c.datos.notas;
+            document.getElementById('checkITBMS').checked = c.datos.checkITBMS;
+            items = JSON.parse(JSON.stringify(c.items));
+            renderItems();
+            calcularTotales();
+        }
+    }
+
+    function borrarCotizacionGuardada() {
+        const id = document.getElementById('historialSelect').value;
+        if(!id) return;
+        if(confirm(`¿Borrar definitivamente la cotización ${id}?`)) {
+            let h = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete h[id];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
+            limpiarFormulario();
+            actualizarSelectHistorial();
+        }
+    }
+
+    function limpiarFormulario() {
+        document.getElementById('clienteNombre').value = '';
+        document.getElementById('clienteTelefono').value = '';
+        document.getElementById('clienteId').value = '';
+        document.getElementById('clienteDireccion').value = '';
+        document.getElementById('numCotizacion').value = 'COT-' + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('historialSelect').value = "";
+        document.getElementById('checkITBMS').checked = false;
+        items = [];
+        agregarItem();
+        calcularTotales();
+    }
+
+    // --- ITEMS ---
     function agregarItem() {
         const id = Date.now();
         items.push({ id, descripcion: '', cantidad: 1, precio: 0 });
@@ -131,47 +494,66 @@
     }
 
     function eliminarItem(id) {
-        if (items.length > 1) {
+        if (items.length > 0) {
             const index = items.findIndex(i => i.id === id);
             items.splice(index, 1);
             renderItems();
             calcularTotales();
         }
+        if (items.length === 0) agregarItem();
     }
 
     function updateItem(id, field, value) {
         const item = items.find(i => i.id === id);
-        if (field === 'cantidad' || field === 'precio') {
-            item[field] = parseFloat(value) || 0;
-        } else {
-            item[field] = value;
+        if (item) {
+            if (field === 'cantidad' || field === 'precio') {
+                item[field] = parseFloat(value) || 0;
+            } else {
+                item[field] = value;
+            }
+            const totalSpan = document.getElementById(`total-${item.id}`);
+            if (totalSpan) totalSpan.innerText = `$${(item.cantidad * item.precio).toFixed(2)}`;
+            calcularTotales();
         }
-        renderItems(false);
-        calcularTotales();
     }
 
-    function renderItems(fullRender = true) {
-        if (!fullRender) {
-            items.forEach(item => {
-                const totalSpan = document.getElementById(`total-${item.id}`);
-                if (totalSpan) totalSpan.innerText = `$${(item.cantidad * item.precio).toFixed(2)}`;
-            });
-            return;
-        }
+    function formatPriceOnBlur(input) {
+        let val = parseFloat(input.value);
+        if(!isNaN(val)) input.value = val.toFixed(2);
+    }
+
+    function renderItems() {
         const container = document.getElementById('itemsList');
-        const header = container.querySelector('.item-header');
         container.innerHTML = '';
-        container.appendChild(header);
 
         items.forEach(item => {
             const row = document.createElement('div');
             row.className = 'item-row';
             row.innerHTML = `
-                <input type="text" placeholder="Descripción" value="${item.descripcion}" oninput="updateItem(${item.id}, 'descripcion', this.value)">
-                <input type="number" placeholder="Cant." value="${item.cantidad}" oninput="updateItem(${item.id}, 'cantidad', this.value)">
-                <input type="number" placeholder="Precio" value="${item.precio}" oninput="updateItem(${item.id}, 'precio', this.value)">
-                <div style="font-weight:bold; text-align:right" id="total-${item.id}">$${(item.cantidad * item.precio).toFixed(2)}</div>
-                <button class="btn-delete" onclick="eliminarItem(${item.id})" title="Eliminar">X</button>
+                <div style="width:100%">
+                    <label style="font-size:0.8rem; color:#666; margin-bottom:2px;">Descripción:</label>
+                    <textarea placeholder="Detalle del servicio..." 
+                        oninput="updateItem(${item.id}, 'descripcion', this.value)">${item.descripcion}</textarea>
+                </div>
+                
+                <div>
+                    <label style="font-size:0.8rem; color:#666; text-align:center; display:block;">Cant.</label>
+                    <input type="number" style="text-align: center; font-weight:bold;" value="${item.cantidad}" 
+                        oninput="updateItem(${item.id}, 'cantidad', this.value)">
+                </div>
+                
+                <div>
+                    <label style="font-size:0.8rem; color:#666; text-align:right; display:block;">Precio ($)</label>
+                    <input type="number" style="text-align: right; font-weight:bold;" value="${item.precio}" 
+                        onblur="formatPriceOnBlur(this)"
+                        oninput="updateItem(${item.id}, 'precio', this.value)">
+                </div>
+                
+                <div style="font-weight:900; font-size:1.2rem; text-align:right; align-self: center; color: var(--primary);" id="total-${item.id}">
+                    $${(item.cantidad * item.precio).toFixed(2)}
+                </div>
+                
+                <button class="btn-remove" onclick="eliminarItem(${item.id})" title="Eliminar fila" style="align-self: center;">&times;</button>
             `;
             container.appendChild(row);
         });
@@ -182,100 +564,78 @@
         const aplicaITBMS = document.getElementById('checkITBMS').checked;
         const itbms = aplicaITBMS ? subtotal * 0.07 : 0;
         const total = subtotal + itbms;
+        
         document.getElementById('txtSubtotal').innerText = `$${subtotal.toFixed(2)}`;
         document.getElementById('txtITBMS').innerText = `$${itbms.toFixed(2)}`;
         document.getElementById('txtTotal').innerText = `$${total.toFixed(2)}`;
         document.getElementById('rowITBMS').style.display = aplicaITBMS ? 'flex' : 'none';
     }
 
+    // --- PDF GENERATOR ---
     async function generarPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Configuración Colores
-        const COLOR_PRINCIPAL = [229, 0, 0]; 
-        const COLOR_SECUNDARIO = [26, 26, 26]; 
-        const COLOR_GRIS_CLARO = [245, 245, 245]; 
+        const C_PRIMARY = [198, 40, 40]; 
+        const C_DARK = [10, 10, 10];
+        const C_GRAY = [80, 80, 80];
 
-        // --- HEADER ---
+        // Header
         const headerHeight = 40; 
-        doc.setFillColor(...COLOR_SECUNDARIO);
-        doc.rect(0, 0, 210, headerHeight, 'F');
+        doc.setFillColor(...C_DARK); doc.rect(0, 0, 210, headerHeight, 'F');
 
-        // Carga de Logo Local
         try {
-            const img = new Image();
-            img.src = LOGO_URL;
-            await new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = resolve; 
-            });
-            if (img.width > 0) doc.addImage(img, 'PNG', 12, 8, 26, 26); 
-            else {
-                 doc.setFontSize(22); doc.setTextColor(255, 255, 255); doc.text("JAPE", 12, 20);
-            }
-        } catch (e) { console.log("Error logo"); }
+            const img = new Image(); img.src = LOGO_URL;
+            await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
+            if (img.width > 0) doc.addImage(img, 'PNG', 15, 10, 20, 20); 
+            else { doc.setFontSize(22); doc.setTextColor(255); doc.text("JAPE", 15, 22); }
+        } catch (e) { }
 
-        // Texto Header
-        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
-        doc.text("MULTISERVICES JAPE", 195, 12, { align: "right" });
-        doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(204, 204, 204);
-        doc.text("Servicios Generales, Mantenimiento y Remodelación", 195, 17, { align: "right" });
-        doc.text("Panamá, Panamá", 195, 22, { align: "right" });
+        doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
+        doc.text("MULTISERVICES JAPE", 195, 15, { align: "right" });
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text("Servicios Generales y Mantenimiento", 195, 21, { align: "right" });
+        doc.text("Panamá | +507 6178-9785", 195, 26, { align: "right" });
 
-        // Línea divisoria
-        doc.setFillColor(...COLOR_PRINCIPAL); doc.rect(0, headerHeight, 210, 2, 'F');
+        doc.setFillColor(...C_PRIMARY); doc.rect(0, headerHeight, 210, 2, 'F');
 
-        // --- BODY ---
-        let y = headerHeight + 15;
-        doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_PRINCIPAL);
-        doc.text("COTIZACIÓN DE SERVICIO", 12, y);
-        y += 10;
+        let y = headerHeight + 20;
+        doc.setFontSize(20); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_PRIMARY);
+        doc.text("COTIZACIÓN", 15, y);
 
-        // Cliente y Datos (Aumentada la altura para el teléfono)
-        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(12, y, 90, 40, 2, 2, 'F'); // Altura 40
-        doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
-        doc.text("FACTURAR A:", 15, y + 5);
+        y += 15;
+        doc.setFontSize(11); doc.setTextColor(...C_GRAY); doc.setFont("helvetica", "bold");
+        doc.text("FACTURAR A:", 15, y);
+        doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
         
+        y += 6;
         const nombre = document.getElementById('clienteNombre').value || 'Cliente General';
-        const telefono = document.getElementById('clienteTelefono').value || ''; // Nuevo campo
+        doc.setFontSize(12); doc.text(nombre.toUpperCase(), 15, y);
+        
+        y += 6; doc.setFontSize(10);
+        const tel = document.getElementById('clienteTelefono').value;
+        if(tel) { doc.text(`Tel: ${tel}`, 15, y); y += 5; }
+        
         const tipoId = document.getElementById('tipoId').value;
-        const numId = document.getElementById('clienteId').value || 'N/A';
-        const direcc = document.getElementById('clienteDireccion').value || '';
-
-        doc.setFontSize(9); doc.setTextColor(51, 51, 51); 
-        doc.text(nombre, 15, y + 10);
+        const numId = document.getElementById('clienteId').value;
+        if(numId) { doc.text(`${tipoId}: ${numId}`, 15, y); y += 5; }
         
-        doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(85, 85, 85);
+        const dir = document.getElementById('clienteDireccion').value;
+        if(dir) { doc.text(dir, 15, y); }
+
+        y = headerHeight + 35;
+        doc.setFont("helvetica", "bold"); doc.setTextColor(...C_GRAY);
+        doc.text("Nº COTIZACIÓN:", 160, y, { align: "right" });
+        doc.setTextColor(0,0,0); doc.text(document.getElementById('numCotizacion').value, 195, y, { align: "right" });
         
-        // Renderizar Teléfono
-        if (telefono) {
-            doc.text(`Tel: ${telefono}`, 15, y + 15);
-        }
-        
-        doc.text(`${tipoId}: ${numId}`, 15, y + (telefono ? 20 : 15));
-        doc.text(direcc, 15, y + (telefono ? 25 : 20), { maxWidth: 80 });
+        y += 7;
+        doc.setTextColor(...C_GRAY); doc.text("FECHA:", 160, y, { align: "right" });
+        doc.setTextColor(0,0,0); doc.text(new Date().toLocaleDateString('es-PA'), 195, y, { align: "right" });
 
-        // Datos Derecha (Info Cotización)
-        doc.setFillColor(...COLOR_GRIS_CLARO); doc.roundedRect(110, y, 85, 40, 2, 2, 'F'); // Altura 40 para igualar
-        const labelX = 115; const valX = 190;
-        
-        doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
-        doc.text("Nº COTIZACIÓN:", labelX, y + 5);
-        doc.setTextColor(...COLOR_PRINCIPAL);
-        doc.text(document.getElementById('numCotizacion').value, valX, y + 5, { align: "right" });
+        y += 7;
+        doc.setTextColor(...C_GRAY); doc.text("VALIDEZ:", 160, y, { align: "right" });
+        doc.setTextColor(0,0,0); doc.text(document.getElementById('validez').value, 195, y, { align: "right" });
 
-        doc.setTextColor(...COLOR_SECUNDARIO);
-        doc.text("FECHA EMISIÓN:", labelX, y + 12);
-        doc.setFont("helvetica", "normal"); doc.setTextColor(51, 51, 51);
-        doc.text(new Date().toLocaleDateString('es-PA'), valX, y + 12, { align: "right" });
-
-        doc.setFont("helvetica", "bold"); doc.setTextColor(...COLOR_SECUNDARIO);
-        doc.text("VALIDEZ:", labelX, y + 19);
-        doc.setFont("helvetica", "normal"); doc.setTextColor(51, 51, 51);
-        doc.text(document.getElementById('validez').value, valX, y + 19, { align: "right" });
-
-        // Tabla
         const tableBody = items.map(item => [
             item.descripcion,
             item.cantidad,
@@ -284,75 +644,59 @@
         ]);
 
         doc.autoTable({
-            startY: y + 45, // Bajamos un poco la tabla porque la caja de arriba creció
+            startY: y + 25,
             head: [['DESCRIPCIÓN', 'CANT.', 'PRECIO U.', 'TOTAL']],
             body: tableBody,
-            theme: 'plain',
-            headStyles: { fillColor: COLOR_SECUNDARIO, textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', halign: 'center' },
-            styles: { fontSize: 8, cellPadding: 3 },
-            columnStyles: { 0: {halign: 'left'}, 1: {halign: 'center'}, 2: {halign: 'right'}, 3: {halign: 'right', fontStyle: 'bold'} },
-            alternateRowStyles: { fillColor: [249, 249, 249] },
-            margin: { left: 12, right: 12 }
+            theme: 'grid',
+            headStyles: { fillColor: C_DARK, textColor: 255, fontStyle: 'bold' },
+            styles: { fontSize: 10, cellPadding: 5, valign: 'middle' },
+            columnStyles: { 0: { cellWidth: 100 }, 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right', fontStyle: 'bold' } }
         });
 
-        // Totales
         let finalY = doc.lastAutoTable.finalY + 10;
-        const boxX = 120;
         const subtotal = items.reduce((s, i) => s + (i.cantidad * i.precio), 0);
         const aplicaITBMS = document.getElementById('checkITBMS').checked;
         const itbms = aplicaITBMS ? subtotal * 0.07 : 0;
         const total = subtotal + itbms;
 
-        doc.setDrawColor(221); doc.line(boxX, finalY, 195, finalY); finalY += 5;
-        doc.setFontSize(9); doc.setTextColor(102); doc.text("Subtotal:", boxX, finalY);
-        doc.setTextColor(51); doc.text(`$${subtotal.toFixed(2)}`, 195, finalY, { align: "right" });
-        finalY += 7;
+        if (finalY > 230) { doc.addPage(); finalY = 20; }
+
+        doc.setFontSize(11);
+        doc.setTextColor(...C_GRAY); doc.text("Subtotal:", 130, finalY);
+        doc.setTextColor(0); doc.text(`$${subtotal.toFixed(2)}`, 195, finalY, { align: "right" });
+        finalY += 8;
 
         if (aplicaITBMS) {
-            doc.setTextColor(102); doc.text("ITBMS (7%):", boxX, finalY);
-            doc.setTextColor(51); doc.text(`$${itbms.toFixed(2)}`, 195, finalY, { align: "right" });
-            finalY += 10;
-        } else { finalY += 3; }
-
-        doc.setFillColor(...COLOR_PRINCIPAL); doc.rect(boxX - 5, finalY - 5, 85, 12, 'F');
-        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(255);
-        doc.text("TOTAL A PAGAR:", boxX, finalY + 3);
-        doc.text(`$${total.toFixed(2)}`, 195, finalY + 3, { align: "right" });
-
-        // --- FOOTER Y DATOS BANCARIOS ---
-        const pageHeight = doc.internal.pageSize.height;
-        let footerY = pageHeight - 30;
-
-        // Comprobamos si hay espacio para los datos bancarios
-        if (finalY > footerY - 40) {
-            doc.addPage();
-            footerY = 40;
+            doc.setTextColor(...C_GRAY); doc.text("ITBMS (7%):", 130, finalY);
+            doc.setTextColor(0); doc.text(`$${itbms.toFixed(2)}`, 195, finalY, { align: "right" });
+            finalY += 8;
         }
 
-        // SECCIÓN BANCARIA
-        const bankY = footerY - 25; 
-        doc.setFontSize(7);
+        doc.setDrawColor(0); doc.line(130, finalY, 195, finalY); finalY += 6;
+        doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_PRIMARY);
+        doc.text("TOTAL:", 130, finalY + 2);
+        doc.text(`$${total.toFixed(2)}`, 195, finalY + 2, { align: "right" });
+
+        // --- FOOTER CON DATOS DE PAGO EXACTOS ---
+        const footerY = doc.internal.pageSize.height - 40;
+        doc.setFontSize(9); doc.setTextColor(0);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(...COLOR_PRINCIPAL);
-        doc.text('INFORMACIÓN DE PAGO:', 12, bankY);
-
+        doc.text('DATOS DE PAGO:', 15, footerY);
+        
         doc.setFont("helvetica", "normal");
-        doc.setTextColor(51, 51, 51);
-        doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: JOSE ANTONIO PEREZ', 12, bankY + 4);
-        doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318 / BANCO BAC N 116961301 / YAPPY 6178-9785', 12, bankY + 8);
+        // Línea 1: Nombre
+        doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: JOSE ANTONIO PEREZ', 15, footerY + 5);
+        // Línea 2: Banco General
+        doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318', 15, footerY + 10);
+        // Línea 3: Banco BAC
+        doc.text('BANCO BAC N 11696130', 15, footerY + 15);
+        
+        doc.setFont("helvetica", "bold");
+        doc.text("NOTAS:", 15, footerY + 23);
+        doc.setFont("helvetica", "normal");
+        doc.text(document.getElementById('notas').value, 15, footerY + 28, { maxWidth: 180 });
 
-        // NOTAS
-        doc.setFont("helvetica", "bold"); doc.setTextColor(51);
-        doc.text("NOTAS:", 12, footerY);
-        doc.setFont("helvetica", "normal"); doc.setTextColor(85);
-        const notas = document.getElementById('notas').value;
-        doc.text(notas, 12, footerY + 5, { maxWidth: 180 });
-
-        doc.setTextColor(170);
-        doc.text("Generado por Multiservices JAPE", 105, pageHeight - 10, { align: "center" });
-
-        const nombreArchivo = `Cotizacion-${document.getElementById('numCotizacion').value}.pdf`;
-        doc.save(nombreArchivo);
+        doc.save(`Cotizacion-${document.getElementById('numCotizacion').value}.pdf`);
     }
 </script>
 
