@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador JAPE</title>
+    <title>Cotizador JAPE S.A.</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
@@ -46,6 +46,15 @@
             letter-spacing: 1px;
             border-bottom: 3px solid var(--primary);
             padding-bottom: 15px;
+        }
+
+        .header-info {
+            text-align: center;
+            margin-top: -25px;
+            margin-bottom: 35px;
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.6;
         }
 
         .section-title { 
@@ -95,7 +104,7 @@
 
         input, select, textarea { 
             width: 100%; 
-            padding: 10px 14px; /* Ajustado padding vertical */
+            padding: 10px 14px; 
             border: 2px solid #ccc; 
             border-radius: 6px; 
             font-size: 1.1rem; 
@@ -113,7 +122,6 @@
             box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1); 
         }
 
-        /* CAMBIO: Altura mínima reducida para que no ocupen tanto espacio en pantalla */
         textarea { resize: vertical; min-height: 40px; } 
 
         button { cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.2s; }
@@ -160,8 +168,8 @@
         .items-header { 
             display: grid; 
             grid-template-columns: 0.5fr 4fr 1fr 1.5fr 1.5fr auto; 
-            gap: 10px; /* Gap reducido */
-            padding: 10px 15px; /* Padding reducido */
+            gap: 10px; 
+            padding: 10px 15px; 
             background-color: #212121; 
             color: white;
             font-weight: bold;
@@ -176,7 +184,7 @@
             display: grid; 
             grid-template-columns: 0.5fr 4fr 1fr 1.5fr 1.5fr auto; 
             gap: 10px; 
-            padding: 10px; /* CAMBIO: Padding reducido de 15px a 10px */
+            padding: 10px; 
             border: 1px solid #ddd;
             border-left: 5px solid #ccc;
             border-radius: 4px;
@@ -189,7 +197,7 @@
             font-weight: 800;
             color: #999;
             text-align: center;
-            padding-top: 10px; /* Ajustado */
+            padding-top: 10px;
             font-size: 1.1rem;
         }
 
@@ -197,7 +205,7 @@
             background: #ffebee; 
             color: #d32f2f; 
             border: 1px solid #ef5350; 
-            width: 40px; height: 40px; /* Ligeramente más pequeño */
+            width: 40px; height: 40px; 
             border-radius: 6px;
             font-size: 1.2rem; 
             display: flex; align-items: center; justify-content: center;
@@ -247,6 +255,10 @@
 
 <div class="container">
     <h1>COTIZADOR JAPE</h1>
+    <div class="header-info">
+        <strong>MULTISERVICES JAPE S.A.</strong> | RUC: 155749634-2-2024 D.V. 39<br>
+        PH GREEN POINT, Panamá | Tel: +507 6178-9785
+    </div>
 
     <div class="control-panel">
         <div class="panel-header">
@@ -571,11 +583,14 @@
             else { doc.setFontSize(22); doc.setTextColor(255); doc.text("JAPE", 15, 22); }
         } catch (e) { }
 
+        // ENCABEZADO DERECHO - INFORMACIÓN DE LA EMPRESA
         doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
-        doc.text("MULTISERVICES JAPE", 195, 15, { align: "right" });
-        doc.setFontSize(10); doc.setFont("helvetica", "normal");
-        doc.text("Servicios Generales y Mantenimiento", 195, 21, { align: "right" });
-        doc.text("Panamá | +507 6178-9785", 195, 26, { align: "right" });
+        doc.text("MULTISERVICES JAPE S.A.", 195, 12, { align: "right" });
+        
+        doc.setFontSize(9); doc.setFont("helvetica", "normal");
+        doc.text("RUC: 155749634-2-2024  D.V. 39", 195, 17, { align: "right" });
+        doc.text("PH GREEN POINT, Panamá", 195, 22, { align: "right" });
+        doc.text("Tel: +507 6178-9785", 195, 27, { align: "right" });
 
         doc.setFillColor(...C_PRIMARY); doc.rect(0, headerHeight, 210, 2, 'F');
 
@@ -630,7 +645,6 @@
             body: tableBody,
             theme: 'grid',
             headStyles: { fillColor: C_DARK, textColor: 255, fontStyle: 'bold' },
-            // CAMBIO AQUÍ: cellPadding reducido a 2 para filas más delgadas
             styles: { fontSize: 10, cellPadding: 2, valign: 'middle' },
             columnStyles: { 
                 0: { cellWidth: 10, halign: 'center' },
@@ -665,20 +679,33 @@
         doc.text("TOTAL:", 130, finalY + 2);
         doc.text(`$${total.toFixed(2)}`, 195, finalY + 2, { align: "right" });
 
-        const footerY = doc.internal.pageSize.height - 40;
+        // SECCIÓN DEL PIE DE PÁGINA (PAGOS, NOTAS Y FIRMA)
+        const footerY = doc.internal.pageSize.height - 45;
+        
+        // Columna Izquierda: Pagos y Notas
         doc.setFontSize(9); doc.setTextColor(0);
         doc.setFont("helvetica", "bold");
         doc.text('DATOS DE PAGO:', 15, footerY);
         
         doc.setFont("helvetica", "normal");
-        doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: JOSE ANTONIO PEREZ', 15, footerY + 5);
+        doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: MULTISERVICES JAPE', 15, footerY + 5);
         doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318', 15, footerY + 10);
         doc.text('BANCO BAC N 116961301', 15, footerY + 15);
         
         doc.setFont("helvetica", "bold");
         doc.text("NOTAS:", 15, footerY + 23);
         doc.setFont("helvetica", "normal");
-        doc.text(document.getElementById('notas').value, 15, footerY + 28, { maxWidth: 180 });
+        // Limité el ancho máximo de las notas para que no choquen con la firma
+        doc.text(document.getElementById('notas').value, 15, footerY + 28, { maxWidth: 110 });
+
+        // Columna Derecha: Sección de Firma
+        doc.setDrawColor(0);
+        doc.line(135, footerY + 25, 195, footerY + 25); // Línea para firmar
+        doc.setFont("helvetica", "bold");
+        doc.text("APROBADO POR (FIRMA)", 165, footerY + 30, { align: "center" });
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text("Nombre y Fecha", 165, footerY + 34, { align: "center" });
 
         doc.save(`Cotizacion-${document.getElementById('numCotizacion').value}.pdf`);
     }
