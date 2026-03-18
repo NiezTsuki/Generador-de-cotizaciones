@@ -573,64 +573,71 @@
         const C_DARK = [10, 10, 10];
         const C_GRAY = [80, 80, 80];
 
-        const headerHeight = 40; 
+        // 1. ENCABEZADO MÁS DELGADO
+        const headerHeight = 35; 
         doc.setFillColor(...C_DARK); doc.rect(0, 0, 210, headerHeight, 'F');
 
         try {
             const img = new Image(); img.src = LOGO_URL;
             await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
-            if (img.width > 0) doc.addImage(img, 'PNG', 15, 10, 20, 20); 
+            if (img.width > 0) doc.addImage(img, 'PNG', 15, 8, 18, 18); 
             else { doc.setFontSize(22); doc.setTextColor(255); doc.text("JAPE", 15, 22); }
         } catch (e) { }
 
-        // ENCABEZADO DERECHO - INFORMACIÓN DE LA EMPRESA
-        doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
         doc.text("MULTISERVICES JAPE S.A.", 195, 12, { align: "right" });
         
-        doc.setFontSize(9); doc.setFont("helvetica", "normal");
+        doc.setFontSize(8); doc.setFont("helvetica", "normal");
         doc.text("RUC: 155749634-2-2024  D.V. 39", 195, 17, { align: "right" });
         doc.text("PH GREEN POINT, Panamá", 195, 22, { align: "right" });
         doc.text("Tel: +507 6178-9785", 195, 27, { align: "right" });
 
         doc.setFillColor(...C_PRIMARY); doc.rect(0, headerHeight, 210, 2, 'F');
 
-        let y = headerHeight + 20;
-        doc.setFontSize(20); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_PRIMARY);
-        doc.text("COTIZACIÓN", 15, y);
+        let y = headerHeight + 15; // y = 50
+        doc.setFontSize(18); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_PRIMARY);
+        doc.text("COTIZACIÓN DE SERVICIO", 15, y);
 
-        y += 15;
-        doc.setFontSize(11); doc.setTextColor(...C_GRAY); doc.setFont("helvetica", "bold");
+        // ==========================================
+        // 2. DISEÑO COMPACTO LADO A LADO
+        // ==========================================
+        y += 10; // y = 60
+        
+        // Columna Izquierda (Cliente)
+        doc.setFontSize(9); doc.setTextColor(...C_GRAY); doc.setFont("helvetica", "bold");
         doc.text("FACTURAR A:", 15, y);
-        doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
         
-        y += 6;
         const nombre = document.getElementById('clienteNombre').value || 'Cliente General';
-        doc.setFontSize(12); doc.text(nombre.toUpperCase(), 15, y);
+        doc.text(nombre.toUpperCase(), 15, y + 5);
         
-        y += 6; doc.setFontSize(10);
-        const tel = document.getElementById('clienteTelefono').value;
-        if(tel) { doc.text(`Tel: ${tel}`, 15, y); y += 5; }
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...C_GRAY);
+        let clientDetailsY = y + 10;
         
         const tipoId = document.getElementById('tipoId').value;
         const numId = document.getElementById('clienteId').value;
-        if(numId) { doc.text(`${tipoId}: ${numId}`, 15, y); y += 5; }
+        if(numId) { doc.text(`${tipoId}: ${numId}`, 15, clientDetailsY); clientDetailsY += 4.5; }
+        
+        const tel = document.getElementById('clienteTelefono').value;
+        if(tel) { doc.text(`Tel: ${tel}`, 15, clientDetailsY); clientDetailsY += 4.5; }
         
         const dir = document.getElementById('clienteDireccion').value;
-        if(dir) { doc.text(dir, 15, y); }
+        if(dir) { doc.text(dir, 15, clientDetailsY, { maxWidth: 100 }); }
 
-        y = headerHeight + 35;
-        doc.setFont("helvetica", "bold"); doc.setTextColor(...C_GRAY);
-        doc.text("Nº COTIZACIÓN:", 160, y, { align: "right" });
+        // Columna Derecha (Datos del Doc) alineada a la misma altura 'y'
+        doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_GRAY);
+        doc.text("Nº COTIZACIÓN:", 150, y, { align: "right" });
         doc.setTextColor(0,0,0); doc.text(document.getElementById('numCotizacion').value, 195, y, { align: "right" });
         
-        y += 7;
-        doc.setTextColor(...C_GRAY); doc.text("FECHA:", 160, y, { align: "right" });
-        doc.setTextColor(0,0,0); doc.text(new Date().toLocaleDateString('es-PA'), 195, y, { align: "right" });
+        doc.setTextColor(...C_GRAY); doc.text("FECHA:", 150, y + 6, { align: "right" });
+        doc.setTextColor(0,0,0); doc.text(new Date().toLocaleDateString('es-PA'), 195, y + 6, { align: "right" });
 
-        y += 7;
-        doc.setTextColor(...C_GRAY); doc.text("VALIDEZ:", 160, y, { align: "right" });
-        doc.setTextColor(0,0,0); doc.text(document.getElementById('validez').value, 195, y, { align: "right" });
+        doc.setTextColor(...C_GRAY); doc.text("VALIDEZ:", 150, y + 12, { align: "right" });
+        doc.setTextColor(0,0,0); doc.text(document.getElementById('validez').value, 195, y + 12, { align: "right" });
 
+        // ==========================================
+        // 3. TABLA MÁS DENSA
+        // ==========================================
         const tableBody = items.map((item, index) => [
             index + 1,
             item.descripcion,
@@ -640,72 +647,84 @@
         ]);
 
         doc.autoTable({
-            startY: y + 25,
+            startY: y + 25, // Sube la tabla, eliminando espacio blanco
             head: [['#', 'DESCRIPCIÓN', 'CANT.', 'PRECIO U.', 'TOTAL']],
             body: tableBody,
             theme: 'grid',
-            headStyles: { fillColor: C_DARK, textColor: 255, fontStyle: 'bold' },
-            styles: { fontSize: 10, cellPadding: 2, valign: 'middle' },
+            headStyles: { fillColor: C_DARK, textColor: 255, fontStyle: 'bold', fontSize: 8 },
+            styles: { fontSize: 8, cellPadding: 1.5, valign: 'middle' }, // cellPadding reducido para filas más delgadas
             columnStyles: { 
                 0: { cellWidth: 10, halign: 'center' },
-                1: { cellWidth: 90 }, 
+                1: { cellWidth: 95 }, 
                 2: { halign: 'center' }, 
                 3: { halign: 'right' }, 
                 4: { halign: 'right', fontStyle: 'bold' } 
             }
         });
 
-        let finalY = doc.lastAutoTable.finalY + 10;
+        // ==========================================
+        // 4. TOTALES Y PIE DE PÁGINA CONTIGUOS
+        // ==========================================
+        let finalY = doc.lastAutoTable.finalY + 8; // Menos margen después de la tabla
+        const pageHeight = doc.internal.pageSize.height;
+        
         const subtotal = items.reduce((s, i) => s + (i.cantidad * i.precio), 0);
         const aplicaITBMS = document.getElementById('checkITBMS').checked;
         const itbms = aplicaITBMS ? subtotal * 0.07 : 0;
         const total = subtotal + itbms;
 
-        if (finalY > 230) { doc.addPage(); finalY = 20; }
+        // Calculamos cuánto espacio necesitamos en bloque (Totales + Pagos/Firma)
+        const espacioRequerido = aplicaITBMS ? 75 : 65;
 
-        doc.setFontSize(11);
-        doc.setTextColor(...C_GRAY); doc.text("Subtotal:", 130, finalY);
-        doc.setTextColor(0); doc.text(`$${subtotal.toFixed(2)}`, 195, finalY, { align: "right" });
-        finalY += 8;
-
-        if (aplicaITBMS) {
-            doc.setTextColor(...C_GRAY); doc.text("ITBMS (7%):", 130, finalY);
-            doc.setTextColor(0); doc.text(`$${itbms.toFixed(2)}`, 195, finalY, { align: "right" });
-            finalY += 8;
+        if (finalY + espacioRequerido > pageHeight - 15) { 
+            doc.addPage(); 
+            finalY = 20; 
         }
 
-        doc.setDrawColor(0); doc.line(130, finalY, 195, finalY); finalY += 6;
-        doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_PRIMARY);
-        doc.text("TOTAL:", 130, finalY + 2);
-        doc.text(`$${total.toFixed(2)}`, 195, finalY + 2, { align: "right" });
+        // --- TOTALES ---
+        doc.setFontSize(10);
+        doc.setTextColor(...C_GRAY); doc.text("Subtotal:", 145, finalY);
+        doc.setTextColor(0); doc.text(`$${subtotal.toFixed(2)}`, 195, finalY, { align: "right" });
+        finalY += 6;
 
-        // SECCIÓN DEL PIE DE PÁGINA (PAGOS, NOTAS Y FIRMA)
-        const footerY = doc.internal.pageSize.height - 45;
+        if (aplicaITBMS) {
+            doc.setTextColor(...C_GRAY); doc.text("ITBMS (7%):", 145, finalY);
+            doc.setTextColor(0); doc.text(`$${itbms.toFixed(2)}`, 195, finalY, { align: "right" });
+            finalY += 6;
+        }
+
+        doc.setDrawColor(0); doc.line(145, finalY, 195, finalY); finalY += 5;
+        doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.setTextColor(...C_PRIMARY);
+        doc.text("TOTAL:", 145, finalY);
+        doc.text(`$${total.toFixed(2)}`, 195, finalY, { align: "right" });
+
+        // --- DATOS DE PAGO Y FIRMA (Justo debajo de los totales) ---
+        let footerY = finalY + 15; 
         
-        // Columna Izquierda: Pagos y Notas
-        doc.setFontSize(9); doc.setTextColor(0);
-        doc.setFont("helvetica", "bold");
+        // Izquierda: Pagos
+        doc.setFontSize(8); doc.setTextColor(0); doc.setFont("helvetica", "bold");
         doc.text('DATOS DE PAGO:', 15, footerY);
         
-        doc.setFont("helvetica", "normal");
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...C_GRAY);
         doc.text('EFECTIVO, CHEQUE O ACH A NOMBRE DE: MULTISERVICES JAPE', 15, footerY + 5);
         doc.text('BANCO GENERAL CUENTA DE AHORRO 0499972235318', 15, footerY + 10);
         doc.text('BANCO BAC N 116961301', 15, footerY + 15);
+        doc.text('YAPPY: 6178-9785', 15, footerY + 20); 
         
-        doc.setFont("helvetica", "bold");
-        doc.text("NOTAS:", 15, footerY + 23);
-        doc.setFont("helvetica", "normal");
-        // Limité el ancho máximo de las notas para que no choquen con la firma
-        doc.text(document.getElementById('notas').value, 15, footerY + 28, { maxWidth: 110 });
+        // Izquierda: Notas (Pegadas a los pagos)
+        doc.setFont("helvetica", "bold"); doc.setTextColor(0); doc.setFontSize(8);
+        doc.text("NOTAS:", 15, footerY + 30);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...C_GRAY);
+        doc.text(document.getElementById('notas').value, 15, footerY + 34, { maxWidth: 110 });
 
-        // Columna Derecha: Sección de Firma
-        doc.setDrawColor(0);
-        doc.line(135, footerY + 25, 195, footerY + 25); // Línea para firmar
-        doc.setFont("helvetica", "bold");
+        // Derecha: Firma
+        doc.setDrawColor(50);
+        doc.line(135, footerY + 25, 195, footerY + 25); 
+        doc.setFont("helvetica", "bold"); doc.setTextColor(0); doc.setFontSize(8);
         doc.text("APROBADO POR (FIRMA)", 165, footerY + 30, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text("Nombre y Fecha", 165, footerY + 34, { align: "center" });
+        
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...C_GRAY);
+        doc.text("Nombre y Fecha", 165, footerY + 38, { align: "center" });
 
         doc.save(`Cotizacion-${document.getElementById('numCotizacion').value}.pdf`);
     }
